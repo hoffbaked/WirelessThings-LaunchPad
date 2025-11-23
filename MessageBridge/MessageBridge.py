@@ -1151,6 +1151,10 @@ is running then run in the current terminal
     def _SerialCheckATLH(self):
         """ check and possible set the the ATLH setting on the radio
         """
+        if self.config.getboolean('Serial', 'skip_at_check', fallback=False):
+            self.logger.warning("tSerial: Skipping AT mode check (skip_at_check enabled)")
+            return True
+
         self.logger.info("tSerial: Setting ATLH1")
 
         self._serial.flushInput()

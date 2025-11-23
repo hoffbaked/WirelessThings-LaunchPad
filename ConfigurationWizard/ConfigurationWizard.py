@@ -123,7 +123,7 @@ class ConfigurationWizard:
 
     _validID = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-#@?\\*"
     _validIDMatch = re.compile("[^A-Z]")
-    _validData = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !\"#$%&'()*+,-.:;<=>?@[\\\/]^_`{|}~"
+    _validData = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !\\\"#$%&'()*+,-.:;<=>?@[\\\\/]^_`{|}~"
     _periodUnits = {"T":"Milli seconds", "S":"Seconds", "M":"Minutes", "H":"Hours", "D":"Days"}
 
     # MARK: - Init
@@ -2219,4 +2219,3 @@ class ConfigurationWizard:
 if __name__ == "__main__":
     app = ConfigurationWizard()
     app.on_execute()
-

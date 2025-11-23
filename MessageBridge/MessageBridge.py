@@ -117,7 +117,7 @@ class MessageBridge():
     _encryptionKey = None
 
     _validID = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-#@?\\*"
-    _validData = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !\"#$%&'()*+,-.:;<=>?@[\\\/]^_`{|}~"
+    _validData = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !\\\"#$%&'()*+,-.:;<=>?@[\\\\/]^_`{|}~"
     _encryptionCommandMatch = re.compile('^EN[1-6]')
 
     _state = ""

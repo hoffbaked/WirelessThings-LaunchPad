@@ -608,7 +608,11 @@ def is_socket(fd):
         """
     result = False
 
-    file_socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_RAW)
+    try:
+        file_socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_RAW)
+    except OSError:
+        # Not a socket
+        return False
 
     try:
         socket_type = file_socket.getsockopt(

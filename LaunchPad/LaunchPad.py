@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ WirelessThings LaunchPad
 
@@ -18,23 +18,23 @@
     limitations under the License.
 
 """
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import sys
 import os
 import subprocess
 import argparse
 import json
-import urllib2
-import httplib
+import urllib.request, urllib.error, urllib.parse
+import http.client
 import shutil
-import ConfigParser
-import tkMessageBox
+import configparser
+import tkinter.messagebox as messagebox
 import threading
-import Queue
+import queue
 import zipfile
 from time import time, sleep
-import tkFileDialog
+import tkinter.filedialog as filedialog
 import fileinput
 from distutils import dir_util
 import stat
@@ -42,7 +42,7 @@ import socket
 import select
 import logging
 from Tabs import *
-import ScrolledText
+import tkinter.scrolledtext as scrolledtext
 
 """
     Big TODO list
@@ -232,18 +232,18 @@ class LaunchPad:
             else:
                 self.newVersion = latest["Versions"][0]
 
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
 
             self.logger.error('Unable to get latest version info - HTTPError = ' +
                             str(e.code))
             self.newVersion = False
 
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             self.logger.error('Unable to get latest version info - URLError = ' +
                             str(e.reason))
             self.newVersion = False
 
-        except httplib.HTTPException as e:
+        except http.client.HTTPException as e:
             self.logger.error('Unable to get latest version info - HTTPException')
             self.newVersion = False
 
@@ -287,7 +287,7 @@ class LaunchPad:
                                     )
         self.updateframe.pack()
 
-        text = ScrolledText.ScrolledText(self.updateframe, width=80,
+        text = scrolledtext.ScrolledText(self.updateframe, width=80,
                                          height=20,
                                          font=("TKDefaultFont", "11"),
                                          wrap=tk.WORD)
@@ -331,8 +331,8 @@ class LaunchPad:
             text.insert(tk.END, "--------------------------------------------------\n")
             notes = self.downloadJSONNotes(version)
             if not notes:
-                tkMessageBox.showerror("Upload Error", "Unable to check for the new version."
-                                                        "Please check your internet connection")
+                messagebox.showerror("Upload Error", "Unable to check for the new version."
+                                                     "Please check your internet connection")
                 self.offerUpdateWindow.destroy()
             for line in notes[str(version)]:
                 text.insert(tk.END, "* {}\n".format(line))
@@ -346,18 +346,18 @@ class LaunchPad:
             url = self.config.get('Update', 'updateurl') + self.config.get('Update', 'notesfile').format(filename)
 
             self.logger.info("Attempting to get the release notes from: {}".format(url))
-            request = urllib2.urlopen(url)
+            request = urllib.request.urlopen(url)
             read_data = request.read()
             return json.loads(read_data)
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
             self.logger.error('Unable to get file - HTTPError = ' +
                             str(e.code))
             return False
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             self.logger.error('Unable to get file - URLError = ' +
                             str(e.reason))
             return False
-        except httplib.HTTPException as e:
+        except http.client.HTTPException as e:
             self.logger.error('Unable to get file - HTTPException')
             return False
         except Exception as e:
@@ -374,20 +374,23 @@ class LaunchPad:
             url = self.config.get('Update', 'updateurl') + self.config.get('Update',
                                 'updatefile').format(self.newVersion)
             self.logger.info("Attempting to get file size for: {}".format(url))
-            u = urllib2.urlopen(url)
+            u = urllib.request.urlopen(url)
             meta = u.info()
-            self.file_size = int(meta.getheaders("Content-Length")[0])
-        except urllib2.HTTPError as e:
+            length_header = meta.get("Content-Length")
+            if length_header is None:
+                raise ValueError("Missing Content-Length header")
+            self.file_size = int(length_header)
+        except urllib.error.HTTPError as e:
             self.logger.error('Unable to get download file size - HTTPError = ' +
                             str(e.code))
             self.updateFailed = "Unable to get download file size"
 
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             self.logger.error('Unable to get download file size- URLError = ' +
                             str(e.reason))
             self.updateFailed = "Unable to get download file size"
 
-        except httplib.HTTPException as e:
+        except http.client.HTTPException as e:
             self.logger.error('Unable to get download file size- HTTPException')
             self.updateFailed = "Unable to get download file size"
 
@@ -398,7 +401,7 @@ class LaunchPad:
             self.updateFailed = "Unable to get download file size"
 
         if self.updateFailed:
-            tkMessageBox.showerror("Update Failed", self.updateFailed)
+            messagebox.showerror("Update Failed", self.updateFailed)
         else:
             position = self.master.geometry().split("+")
 
@@ -422,7 +425,7 @@ class LaunchPad:
                             variable=self.progressBar).pack()
 
             self.downloadThread = threading.Thread(target=self.downloadUpdate)
-            self.progressQueue = Queue.Queue()
+            self.progressQueue = queue.Queue()
             self.downloadThread.start()
             self.progressUpdate()
 
@@ -434,7 +437,7 @@ class LaunchPad:
         self.progressQueue.task_done()
         if self.updateFailed:
             self.progressWindow.destroy()
-            tkMessageBox.showerror("Update Failed", self.updateFailed)
+            messagebox.showerror("Update Failed", self.updateFailed)
         elif value < self.file_size:
             self.master.after(1, self.progressUpdate)
         else:
@@ -462,10 +465,13 @@ class LaunchPad:
 
         try:
             self.logger.info("Downloading file: {}".format(url))
-            u = urllib2.urlopen(url)
+            u = urllib.request.urlopen(url)
             f = open(localFile, 'wb')
             meta = u.info()
-            file_size = int(meta.getheaders("Content-Length")[0])
+            length_header = meta.get("Content-Length")
+            if length_header is None:
+                raise ValueError("Missing Content-Length header")
+            file_size = int(length_header)
             self.logger.info("Downloading: {0} Bytes: {1}".format(url,
                                                                  file_size))
 
@@ -485,17 +491,17 @@ class LaunchPad:
                 self.progressQueue.put(file_size_dl)
 
             f.close()
-        except urllib2.HTTPError as e:
+        except urllib.error.HTTPError as e:
             self.logger.error('Unable to get download file - HTTPError = ' +
                             str(e.code))
             self.updateFailed = "Unable to get download file"
 
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             self.logger.error('Unable to get download file - URLError = ' +
                             str(e.reason))
             self.updateFailed = "Unable to get download file"
 
-        except httplib.HTTPException as e:
+        except http.client.HTTPException as e:
             self.logger.error('Unable to get download file - HTTPException')
             self.updateFailed = "Unable to get download file"
 
@@ -510,12 +516,12 @@ class LaunchPad:
         self.updateFailed = False
         # if Download dir already exists, make it default to manualZipUpdate
         if os.path.exists(self.config.get('Update', 'downloaddir')):
-            filename = tkFileDialog.askopenfilename(title="Please select the {} Update zip".format(self._name),
+            filename = filedialog.askopenfilename(title="Please select the {} Update zip".format(self._name),
                                                     initialdir=self.config.get('Update', 'downloaddir'),
                                                     filetypes = [("Zip Files",
                                                                   "*.zip")])
         else: # otherwise, use the root folder
-            filename = tkFileDialog.askopenfilename(title="Please select the {} Update zip".format(self._name),
+            filename = filedialog.askopenfilename(title="Please select the {} Update zip".format(self._name),
                                                     initialdir="../",
                                                     filetypes = [("Zip Files",
                                                                   "*.zip")])
@@ -556,12 +562,12 @@ class LaunchPad:
 
         self.progressBar = tk.IntVar()
         ttk.Progressbar(self.progressWindow, orient="horizontal",
-                     length=200, mode="determinate",
-                     maximum=self.zipFileCount,
-                     variable=self.progressBar).pack()
+                        length=200, mode="determinate",
+                        maximum=self.zipFileCount,
+                        variable=self.progressBar).pack()
 
         self.zipThread = threading.Thread(target=self.zipExtract)
-        self.progressQueue = Queue.Queue()
+        self.progressQueue = queue.Queue()
         self.zipThread.start()
         self.zipProgressUpdate()
 
@@ -573,7 +579,7 @@ class LaunchPad:
         self.progressQueue.task_done()
         if self.updateFailed:
             self.progressWindow.destroy()
-            tkMessageBox.showerror("Update Failed", self.updateFailed)
+            messagebox.showerror("Update Failed", self.updateFailed)
         elif value < self.zipFileCount:
             self.master.after(1, self.zipProgressUpdate)
         else:
@@ -976,7 +982,7 @@ class LaunchPad:
     def _updateMessageBridgeDetailsFromJSON(self, jsonin, address):
         # update Message Bridge entry in our list
         # TODO: this needs to be a intelligent merge not just overwrite
-        if jsonin['network'] in self._messageBridges.keys():
+        if jsonin['network'] in list(self._messageBridges.keys()):
             network = jsonin['network']
             if self._messageBridges[network]['address'] != address:
                 self._messageBridges[network]['state'] = "CONFLICT"
@@ -1014,7 +1020,7 @@ class LaunchPad:
             """
         self.logger.debug("UDP Send Thread init")
 
-        self.qUDPSend = Queue.Queue()
+        self.qUDPSend = queue.Queue()
 
         self.tUDPSendStop = threading.Event()
 
@@ -1050,7 +1056,7 @@ class LaunchPad:
         while not self.tUDPSendStop.is_set():
             try:
                 message = self.qUDPSend.get(timeout=1)     # block for up to 30 seconds
-            except Queue.Empty:
+            except queue.Empty:
                 # UDP Send que was empty
                 # extrem debug message
                 # self.logger.error("tUDPSend: queue is empty")
@@ -1159,9 +1165,9 @@ class LaunchPad:
         self.logger.debug("Querying {}".format(appCommand))
         output = subprocess.check_output(appCommand,
                                          cwd=self.appList[app]['CWD'])
-        if output.find("PID") is not -1:
+        if output.find("PID") != -1:
             running = True
-        elif output.find("not") is not -1:
+        elif output.find("not") != -1:
             running = False
         return running
 
@@ -1179,7 +1185,7 @@ class LaunchPad:
                 # ok script is there is it setup in rc3.d
                 installed = False
                 for file in os.listdir("/etc/rc3.d/"):
-                    if file.find(self.appList[app]['InitScript']) is not -1:
+                    if file.find(self.appList[app]['InitScript']) != -1:
                         installed = True
             else:
                 installed = False
@@ -1355,7 +1361,7 @@ class LaunchPad:
         if self.debugArg:
             appCommand.append("-d")
 
-        if command is not 'launch':
+        if command != 'launch':
             appCommand.append(command)
 
         self.logger.debug("Verifing the apps exec permissions")
@@ -1381,7 +1387,7 @@ class LaunchPad:
             cproc.stdin.close()
             cproc.wait()
 
-        if not NoUIUpdate and command is not 'launch':
+        if not NoUIUpdate and command != 'launch':
             self.disableSSRButtons()
             if command == 'start':
                 self.master.after(2000, lambda: self.updateSSRButtons(app))
@@ -1389,7 +1395,7 @@ class LaunchPad:
                 self.master.after(5000, lambda: self.updateSSRButtons(app))
 
     def launchAdvance(self):
-        items = map(int, self.advanceSelect.curselection())
+        items = list(map(int, self.advanceSelect.curselection()))
         if items:
             if items[0] == 0:
                 self.manualZipUpdate()
@@ -1399,7 +1405,7 @@ class LaunchPad:
     def readConfig(self):
         self.logger.info("Reading Config")
 
-        self.config = ConfigParser.SafeConfigParser()
+        self.config = configparser.ConfigParser()
 
         # load defaults
         try:
@@ -1467,7 +1473,7 @@ class LaunchPad:
 
                 self.logger.info("Reading Config")
 
-                cfgFile = ConfigParser.SafeConfigParser()
+                cfgFile = configparser.ConfigParser()
 
                 # load defaults first
                 try:
@@ -1495,7 +1501,7 @@ class LaunchPad:
 
         self.logger.info("Reading Config")
 
-        cfgFile = ConfigParser.SafeConfigParser()
+        cfgFile = configparser.ConfigParser()
 
         # load defaults first
         try:

@@ -6,10 +6,10 @@ WirelessThings LaunchPad is a collection of python program for talking to and co
 
 ## Requirements
 The LaunchPad and the Device Configuration Wizard only require the following
-* Python 2.7
+* Python 3.8+
 
 The Message Bridge can be run on any system with the following requirements
-* Python 2.7
+* Python 3.8+
 * pySerial
 * WirelessThings radio with firmware version of at least Serial V0.88 or USB V0.53
 

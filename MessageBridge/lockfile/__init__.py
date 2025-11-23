@@ -48,7 +48,7 @@ Exceptions:
             NotMyLock - File was locked but not by the current thread/process
 """
 
-from __future__ import division
+
 
 import sys
 import socket
@@ -56,7 +56,7 @@ import os
 import threading
 import time
 import errno
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 # Work with PEP8 and non-PEP8 versions of threading module.
 if not hasattr(threading, "current_thread"):
@@ -370,8 +370,8 @@ class SQLiteFileLock(LockBase):
         >>> lock = SQLiteFileLock('somefile', threaded=False)
         """
         LockBase.__init__(self, path, threaded)
-        self.lock_file = unicode(self.lock_file)
-        self.unique_name = unicode(self.unique_name)
+        self.lock_file = str(self.lock_file)
+        self.unique_name = str(self.unique_name)
 
         import sqlite3
         self.connection = sqlite3.connect(SQLiteFileLock.testdb)

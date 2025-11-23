@@ -994,6 +994,8 @@ is running then run in the current terminal
             while (not self.tSerialStop.is_set()):
                 # open the port
                 try:
+                    if self._serial.is_open:
+                        self._serial.close()
                     self._serial.open()
                     self.logger.info("tSerial: Opened the serial port")
                 except serial.SerialException:
@@ -1051,10 +1053,15 @@ is running then run in the current terminal
                 # port closed for some reason (or tSerialStop), if tSerialStop is not set we will try reopening
         except IOError:
             self.logger.exception("tSerial: IOError on serial port")
-
-        # close the port
-        self.logger.info("tSerial: Closing serial port")
-        self._serial.close()
+        except Exception:
+            self.logger.exception("tSerial: Unhandled exception")
+        finally:
+            # close the port
+            try:
+                if self._serial.is_open:
+                    self._serial.close()
+            finally:
+                self.logger.info("tSerial: Closing serial port")
 
         self.logger.info("tSerial: Thread stoping")
         return

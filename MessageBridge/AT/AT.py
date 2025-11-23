@@ -181,7 +181,9 @@ class AT():
         buffer = ""
         char = ""
         while (time() - starttime) < timeout and char != "\r":
-            char = self._serial.read().decode()
+            raw = self._serial.read()
+            # tolerate occasional non-UTF8 bytes from the radio
+            char = raw.decode(errors="ignore")
             #self.logger.debug("AT: RX:{}".format(char))
             buffer += char
 

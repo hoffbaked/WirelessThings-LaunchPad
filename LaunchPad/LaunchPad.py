@@ -1167,11 +1167,13 @@ class LaunchPad:
                                          cwd=self.appList[app]['CWD'],
                                          stderr=subprocess.STDOUT)
         if isinstance(output, bytes):
-            output = output.decode(errors="replace")
+            output_text = output.decode(errors="replace")
+        else:
+            output_text = str(output)
 
-        if output.find("PID") != -1:
+        if "PID" in output_text:
             running = True
-        elif output.find("not") != -1:
+        elif "not" in output_text:
             running = False
         return running
 

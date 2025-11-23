@@ -1269,6 +1269,8 @@ class LaunchPad:
                 if not NoUIUpdate:
                     self.password = None
                     self.master.after(500, lambda: self.updateSSRButtons(app))
+                    messagebox.showinfo("Autostart Enabled",
+                                        "{} autostart enabled. (init.d)".format(self.appList[app]['Name']))
 
             elif command == 'disable':
                 self.logger.debug("Removing init.d script for app: {}".format(app))
@@ -1301,6 +1303,8 @@ class LaunchPad:
                 if not NoUIUpdate:
                     self.password = None
                     self.master.after(500, lambda: self.updateSSRButtons(app))
+                    messagebox.showinfo("Autostart Disabled",
+                                        "{} autostart disabled. (init.d)".format(self.appList[app]['Name']))
 
 
     def updateRCd(self, app, command):

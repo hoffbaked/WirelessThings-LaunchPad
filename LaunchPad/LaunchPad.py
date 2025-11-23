@@ -84,9 +84,9 @@ class LaunchPad:
 
         self.debug = False # until we read config
         self.debugArg = False # or get command line
-        self.configFileDefault = "LaunchPad_defaults.cfg"
-        self.configFile = "LaunchPad.cfg"
-        self.appFile = "AppList.json"
+        self.configFileDefault = os.path.join(self._path, "LaunchPad_defaults.cfg")
+        self.configFile = os.path.join(self._path, "LaunchPad.cfg")
+        self.appFile = os.path.join(self._path, "AppList.json")
 
         self.widthMain = 550
         self.heightMain = 300
@@ -1408,9 +1408,7 @@ class LaunchPad:
         self.config = configparser.ConfigParser()
 
         # load defaults
-        try:
-            self.config.readfp(open(self.configFileDefault))
-        except:
+        if not self.config.read(self.configFileDefault):
             self.logger.debug("Could Not Load Default Settings File")
 
         # read the user config file
@@ -1432,7 +1430,7 @@ class LaunchPad:
 
     def writeConfig(self):
         self.logger.debug("Writing Config")
-        with open(self.configFile, 'wb') as configfile:
+        with open(self.configFile, 'w') as configfile:
             self.config.write(configfile)
 
     def loadApps(self):

@@ -283,7 +283,7 @@ is running then run in the current terminal
         self._daemonContext = DaemonContext()
         self._daemonContext.stdin = open('/dev/null', 'r')
         self._daemonContext.stdout = open('/dev/null', 'w+')
-        self._daemonContext.stderr = open('/dev/null', 'w+', buffering=0)
+        self._daemonContext.stderr = open('/dev/null', 'w+')
         self._daemonContext.pidfile = self._pidFile
         self._daemonContext.working_directory = self._path
 

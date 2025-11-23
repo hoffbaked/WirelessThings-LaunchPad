@@ -1164,7 +1164,11 @@ class LaunchPad:
 
         self.logger.debug("Querying {}".format(appCommand))
         output = subprocess.check_output(appCommand,
-                                         cwd=self.appList[app]['CWD'])
+                                         cwd=self.appList[app]['CWD'],
+                                         stderr=subprocess.STDOUT)
+        if isinstance(output, bytes):
+            output = output.decode(errors="replace")
+
         if output.find("PID") != -1:
             running = True
         elif output.find("not") != -1:

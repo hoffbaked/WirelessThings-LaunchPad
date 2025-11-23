@@ -458,6 +458,9 @@ is running then run in the current terminal
 
         except KeyboardInterrupt:
             self.logger.info("Keyboard Interrupt - Exiting")
+        except Exception:
+            self.logger.exception("Unhandled exception in main loop")
+            self.die()
             self._cleanUp()
 
         self.logger.debug("Exiting")
@@ -1033,7 +1036,7 @@ is running then run in the current terminal
                             self._serial.write(wirelessMsg.encode())
                         except queue.Empty:
                             self.logger.debug("tSerial: failed to get item from queue")
-                        except Serial.SerialException as e:
+                        except serial.SerialException as e:
                             self.logger.warn("tSerial: failed to write to the serial port {}: {}".format(self._serial.port, e))
                         else:
                              self.logger.debug("tSerial: TX:{}".format(wirelessMsg))
@@ -1380,7 +1383,7 @@ is running then run in the current terminal
         if wirelessMsg == "CONFIGME" and self.fKeepAwake.is_set():
             try:
                 self._serial.write("a??HELLO----".encode())
-            except Serial.SerialException as e:
+            except serial.SerialException as e:
                 self.logger.warn("tSerial: failed to write to the serial port {}: {}".format(self._serial.port, e))
             else:
                 self.logger.debug("tSerial: TX:a??HELLO-----")
@@ -1398,7 +1401,7 @@ is running then run in the current terminal
                 wirelessToSend += "-"
             try:
                 self._serial.write(wirelessToSend.encode())
-            except Serial.SerialException as e:
+            except serial.SerialException as e:
                 self.logger.warn("tSerial: failed to write to the serial port {}: {}".format(self._serial.port, e))
                 return False
             else:
@@ -1414,7 +1417,7 @@ is running then run in the current terminal
         """
         try:
           self._serial.write("a??DTY------".encode())
-        except Serial.SerialException as e:
+        except serial.SerialException as e:
           self.logger.warn("tSerial: failed to write to the serial port {}: {}".format(self._serial.port, e))
           return False
         else:

@@ -1574,9 +1574,9 @@ class PasswordDialog(tk.Toplevel):
                                       )
                       )
         if sys.platform == 'win32':
-            tk.Label(self, text="Admin permision is required to this action.\n\nPlease enter Admin password").pack(in_=top, pady=5)
+            tk.Label(self, text="Admin permission is required for this action.\n\nPlease enter your admin password").pack(in_=top, pady=5)
         else:
-            tk.Label(self, text="Root permision is required to this action.\n\nPlease enter root password").pack(in_=top, pady=5)
+            tk.Label(self, text="Sudo permission is required for this action.\n\nPlease enter your user password").pack(in_=top, pady=5)
         self.entry = tk.Entry(self, show='*')
         self.entry.bind("<KeyRelease-Return>", self.StorePassEvent)
         self.entry.pack(in_=top, pady=5)

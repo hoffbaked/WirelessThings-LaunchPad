@@ -1558,9 +1558,10 @@ class LaunchPad:
 
 class PasswordDialog(tk.Toplevel):
     def __init__(self, parent):
-        tk.Toplevel.__init__(self, )
+        tk.Toplevel.__init__(self, parent.master)
         self.parent = parent
         position = self.parent.master.geometry().split("+")
+        self.transient(self.parent.master)
 
         top = tk.Frame(self)
         bottom = tk.Frame(self)
@@ -1588,8 +1589,12 @@ class PasswordDialog(tk.Toplevel):
         cancelButton["command"] = self.Cancel
         cancelButton.pack(in_=bottom, side=tk.LEFT, padx=35, pady=10)
 
-        self.update() #make sure the window is already visible
-        self.grab_set_global()
+        self.protocol("WM_DELETE_WINDOW", self.Cancel)
+        self.update_idletasks()
+        self.lift(self.parent.master)
+        self.entry.focus_set()
+        self.wait_visibility()
+        self.grab_set()
 
 
     def StorePassEvent(self, event):
@@ -1597,10 +1602,12 @@ class PasswordDialog(tk.Toplevel):
 
     def StorePass(self):
         self.parent.password = self.entry.get()
+        self.grab_release()
         self.destroy()
 
     def Cancel(self):
         self.parent.password = False
+        self.grab_release()
         self.destroy()
 
 if __name__ == "__main__":

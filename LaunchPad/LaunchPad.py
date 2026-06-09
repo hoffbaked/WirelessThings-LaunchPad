@@ -730,6 +730,15 @@ class LaunchPad:
         self.tBarFrame.add(iframe)
 
 
+        #canvas = tk.Canvas(iframe, bd=0, width=self.widthMain-4,
+        #                       height=self.heightTab-4, highlightthickness=0)
+        #canvas.grid(row=0, column=0, columnspan=3, rowspan=5)
+
+        tk.Canvas(iframe, bd=0, highlightthickness=0, width=self.widthMain-4,
+                  height=28).grid(row=1, column=1, columnspan=3)
+        tk.Canvas(iframe, bd=0, highlightthickness=0, width=150,
+                  height=self.heightTab-4).grid(row=1, column=1, rowspan=3)
+
         tk.Label(iframe, text="Select an App to Launch").grid(row=1, column=1,
                                                               sticky=tk.W)
 
@@ -816,6 +825,11 @@ class LaunchPad:
         aframe.config(relief=tk.RAISED, borderwidth=2, width=self.widthMain,
                       height=self.heightTab)
         self.tBarFrame.add(aframe)
+
+        tk.Canvas(aframe, bd=0, highlightthickness=0, width=self.widthMain-4,
+                  height=28).grid(row=1, column=1, columnspan=3)
+        tk.Canvas(aframe, bd=0, highlightthickness=0, width=150,
+                  height=self.heightTab-4).grid(row=1, column=1, rowspan=3)
 
         tk.Label(aframe, text="Select an Advanced Task to Launch").grid(row=1,
                                                                         columnspan=3,

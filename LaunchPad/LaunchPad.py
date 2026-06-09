@@ -292,8 +292,8 @@ class LaunchPad:
 
         self.offerUpdateWindow = tk.Toplevel()
         self.offerUpdateWindow.geometry("+{}+{}".format(
-                                                    int(position[1])+self.widthMain/6,
-                                                    int(position[2])+self.heightMain/6
+                                                    int(int(position[1])+self.widthMain/6),
+                                                    int(int(position[2])+self.heightMain/6)
                                                     )
                                         )
 
@@ -427,10 +427,8 @@ class LaunchPad:
 
             self.progressWindow = tk.Toplevel()
             self.progressWindow.geometry("+{}+{}".format(
-                                            int(position[1]
-                                                )+self.widthMain/4,
-                                            int(position[2]
-                                                )+self.heightMain/4
+                                            int(int(position[1])+self.widthMain/4),
+                                            int(int(position[2])+self.heightMain/4)
                                                          )
                                          )
             self.progressWindow.title("Downloading Zip Files")
@@ -571,8 +569,8 @@ class LaunchPad:
 
         self.progressWindow = tk.Toplevel()
         self.progressWindow.geometry("+{}+{}".format(
-                                             int(position[1])+self.widthMain/4,
-                                             int(position[2])+self.heightMain/4
+                                             int(int(position[1])+self.widthMain/4),
+                                             int(int(position[2])+self.heightMain/4)
                                                      )
                                      )
 
@@ -672,8 +670,8 @@ class LaunchPad:
             monitorHeight = self.master.winfo_screenheight()
             #if the offset stored is not applicable, center the screen
             if configWidth > monitorWidth or configHeight > monitorHeight:
-                    width_offset = (monitorWidth - self.widthMain)/2
-                    height_offset = (monitorHeight - self.heightMain+self.heightStatusBar)/2
+                    width_offset = int((monitorWidth - self.widthMain)/2)
+                    height_offset = int((monitorHeight - self.heightMain+self.heightStatusBar)/2)
             else:
                 #uses config
                 width_offset = configWidth
@@ -1271,7 +1269,8 @@ class LaunchPad:
                                ]
                 cproc = subprocess.Popen(copyCommand,
                                         stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE
+                                        stdout=subprocess.PIPE,
+                                        text=True
                                         )
                 cproc.stdin.write(self.password+'\n')
                 cproc.stdin.close()
@@ -1283,7 +1282,8 @@ class LaunchPad:
                              ]
                 chproc = subprocess.Popen(chCommand,
                                           stdin=subprocess.PIPE,
-                                          stdout=subprocess.PIPE
+                                          stdout=subprocess.PIPE,
+                                          text=True
                                           )
                 chproc.stdin.write(self.password+'\n')
                 chproc.stdin.close()
@@ -1320,7 +1320,8 @@ class LaunchPad:
 
                 rproc = subprocess.Popen(removeCommand,
                                         stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE
+                                        stdout=subprocess.PIPE,
+                                        text=True
                                         )
                 rproc.stdin.write(self.password+'\n')
                 rproc.stdin.close()
@@ -1340,7 +1341,8 @@ class LaunchPad:
                            ]
         proc = subprocess.Popen(updateRCCommand +[command],
                                 stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE
+                                stdout=subprocess.PIPE,
+                                text=True
                                 )
         proc.stdin.write(self.password+'\n')
         proc.stdin.close()
@@ -1413,7 +1415,8 @@ class LaunchPad:
         cproc = subprocess.Popen(appCommand,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                cwd=self.appList[app]['CWD']
+                                cwd=self.appList[app]['CWD'],
+                                text=True
                                 )
         self.proc.append(cproc)
 
@@ -1565,10 +1568,8 @@ class PasswordDialog(tk.Toplevel):
         bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
         self.geometry("+{}+{}".format(
-                                      int(position[1]
-                                          )+self.parent.widthMain/4,
-                                      int(position[2]
-                                          )+self.parent.heightMain/4
+                                      int(int(position[1])+self.parent.widthMain/4),
+                                      int(int(position[2])+self.parent.heightMain/4)
                                       )
                       )
         if sys.platform == 'win32':

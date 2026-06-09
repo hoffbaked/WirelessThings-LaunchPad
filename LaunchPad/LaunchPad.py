@@ -98,6 +98,7 @@ class LaunchPad:
 
         self._running = False
         self._ssrStatusRequestID = 0
+        self._ssrStatusCheckRunning = False
         # setup initial Logging
         logging.getLogger().setLevel(logging.NOTSET)
         self.logger = logging.getLogger('LaunchPad')
@@ -891,7 +892,7 @@ class LaunchPad:
             pass
         else:
             if self.appList[app].get('Service', 0):
-                self.updateSSRButtons(app)
+                self.updateSSRButtons(app, force=False)
         self.master.after(4000, self.checkSSRButtonsState)
 
     def checkNetwork(self):
@@ -1149,12 +1150,15 @@ class LaunchPad:
         app = int(self.advanceSelect.curselection()[0])
         self.advanceText.config(text=self.advanceList[app]['Description'])
 
-    def updateSSRButtons(self, app):
+    def updateSSRButtons(self, app, force=True):
         """ Update buttons based on the state of the current selection in appList
         """
+        if self._ssrStatusCheckRunning and not force:
+            return
+
         self._ssrStatusRequestID += 1
         requestID = self._ssrStatusRequestID
-        self.disableSSRButtons()
+        self._ssrStatusCheckRunning = True
 
         thread = threading.Thread(target=self._updateSSRButtonsThread,
                                   args=(app, requestID))
@@ -1185,6 +1189,8 @@ class LaunchPad:
             pass
 
     def _applySSRButtons(self, app, requestID, running, installed):
+        self._ssrStatusCheckRunning = False
+
         if requestID != self._ssrStatusRequestID:
             return
 
@@ -1198,20 +1204,20 @@ class LaunchPad:
 
         if running == True:
             self.SSRFrame.children['start'].config(state=tk.DISABLED)
-            self.SSRFrame.children['stop'].config(state=tk.ACTIVE)
-            self.SSRFrame.children['restart'].config(state=tk.ACTIVE)
+            self.SSRFrame.children['stop'].config(state=tk.NORMAL)
+            self.SSRFrame.children['restart'].config(state=tk.NORMAL)
         elif running == False:
-            self.SSRFrame.children['start'].config(state=tk.ACTIVE)
+            self.SSRFrame.children['start'].config(state=tk.NORMAL)
             self.SSRFrame.children['stop'].config(state=tk.DISABLED)
             self.SSRFrame.children['restart'].config(state=tk.DISABLED)
 
         if self.appList[app].get('Autostart', 0):
             if installed == True:
-                self.serviceButton.config(state=tk.ACTIVE,
+                self.serviceButton.config(state=tk.NORMAL,
                                           text=self._autoStartText['disable'],
                                           command=lambda: self.autostart(app, 'disable'))
             elif installed == False:
-                self.serviceButton.config(state=tk.ACTIVE,
+                self.serviceButton.config(state=tk.NORMAL,
                                           text=self._autoStartText['enable'],
                                           command=lambda: self.autostart(app, 'enable'))
             else:

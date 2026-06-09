@@ -184,6 +184,26 @@ class LaunchPad:
             self.master.destroy()
         self._running = False
 
+    def die(self):
+        """Stop the GUI after a fatal runtime error."""
+        self.logger.critical("DIE")
+        self.endLaunchPad()
+
+    def _socketErrorDetails(self, error):
+        args = getattr(error, 'args', ())
+        code = getattr(error, 'errno', None)
+        message = getattr(error, 'strerror', None)
+
+        if code is None and len(args) > 0:
+            code = args[0]
+        if message is None:
+            if len(args) > 1:
+                message = args[1]
+            else:
+                message = error
+
+        return code, message
+
     def cleanUp(self):
         self.logger.info("Clean up and exit")
         # disconnect resources
@@ -908,7 +928,7 @@ class LaunchPad:
                 self.logger.error("UDPThread thread stopped. Try restarting it")
                 self._startUDPListenThread()
                 sleep(2)
-                if self.tUDPListen.is_alive():
+                if not self.tUDPListen.is_alive():
                     self.logger.critical("Unable to restart UDP Listen Thread")
                     self.die()
 
@@ -916,7 +936,7 @@ class LaunchPad:
                 self.logger.error("UDPSend thread stopped. Try restarting it")
                 self._startUDPSendThread()
                 sleep(2)
-                if self.tUDPSend.is_alive():
+                if not self.tUDPSend.is_alive():
                     self.logger.critical("Unable to restart UDP Send Thread")
                     self.die()
 
@@ -1037,7 +1057,8 @@ class LaunchPad:
         try:
             UDPSendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except socket.error as msg:
-            self.logger.error("tUDPSend: Failed to create socket. Error code : {} Message : {}".format(msg[0], msg[1]))
+            code, message = self._socketErrorDetails(msg)
+            self.logger.error("tUDPSend: Failed to create socket. Error code : {} Message : {}".format(code, message))
             # tUDPSend needs to stop here
             # need to send message to user saying could not open socket
             return
@@ -1057,19 +1078,23 @@ class LaunchPad:
                 pass
             else:
                 self.logger.debug("tUDPSend: Got json to send: {}".format(message))
+                if isinstance(message, str):
+                    message = message.encode()
                 try:
                     UDPSendSocket.sendto(message, ('<broadcast>', sendPort))
                     self.logger.debug("tUDPSend: Put message out via UDP")
                 except socket.error as msg:
-                    if msg[0] == 101:
+                    code, errorMessage = self._socketErrorDetails(msg)
+                    if code == 101:
                         try:
                             self.logger.warn("tUDPSend: External network unreachable retrying on local interface only")
                             UDPSendSocket.sendto(message, ('127.0.0.255', sendPort))
                             self.logger.debug("tUDPSend: Put message out via UDP to local only")
                         except socket.error as msg:
-                            self.logger.warn("tUDPSend: Failed to send via UDP local only. Error code : {} Message: {}".format(msg[0], msg[1]))
+                            code, errorMessage = self._socketErrorDetails(msg)
+                            self.logger.warn("tUDPSend: Failed to send via UDP local only. Error code : {} Message: {}".format(code, errorMessage))
                     else:
-                        self.logger.warn("tUDPSend: Failed to send via UDP. Error code : {} Message: {}".format(msg[0], msg[1]))
+                        self.logger.warn("tUDPSend: Failed to send via UDP. Error code : {} Message: {}".format(code, errorMessage))
                 else:
                     pass
                 # tidy up
@@ -1159,9 +1184,9 @@ class LaunchPad:
         self.logger.debug("Querying {}".format(appCommand))
         output = subprocess.check_output(appCommand,
                                          cwd=self.appList[app]['CWD'])
-        if output.find("PID") is not -1:
+        if output.find("PID") != -1:
             running = True
-        elif output.find("not") is not -1:
+        elif output.find("not") != -1:
             running = False
         return running
 
@@ -1179,7 +1204,7 @@ class LaunchPad:
                 # ok script is there is it setup in rc3.d
                 installed = False
                 for file in os.listdir("/etc/rc3.d/"):
-                    if file.find(self.appList[app]['InitScript']) is not -1:
+                    if file.find(self.appList[app]['InitScript']) != -1:
                         installed = True
             else:
                 installed = False
@@ -1355,7 +1380,7 @@ class LaunchPad:
         if self.debugArg:
             appCommand.append("-d")
 
-        if command is not 'launch':
+        if command != 'launch':
             appCommand.append(command)
 
         self.logger.debug("Verifing the apps exec permissions")
@@ -1381,7 +1406,7 @@ class LaunchPad:
             cproc.stdin.close()
             cproc.wait()
 
-        if not NoUIUpdate and command is not 'launch':
+        if not NoUIUpdate and command != 'launch':
             self.disableSSRButtons()
             if command == 'start':
                 self.master.after(2000, lambda: self.updateSSRButtons(app))

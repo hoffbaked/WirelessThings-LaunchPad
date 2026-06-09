@@ -97,6 +97,7 @@ class LaunchPad:
         self.updateAvailable = False
 
         self._running = False
+        self._ssrStatusRequestID = 0
         # setup initial Logging
         logging.getLogger().setLevel(logging.NOTSET)
         self.logger = logging.getLogger('LaunchPad')
@@ -884,7 +885,13 @@ class LaunchPad:
         self.master.after(5000, self.checkUDPThreads)
 
     def checkSSRButtonsState(self):
-        self.onAppSelect(None)
+        try:
+            app = int(self.appSelect.curselection()[0])
+        except (AttributeError, IndexError):
+            pass
+        else:
+            if self.appList[app].get('Service', 0):
+                self.updateSSRButtons(app)
         self.master.after(4000, self.checkSSRButtonsState)
 
     def checkNetwork(self):
@@ -1145,8 +1152,19 @@ class LaunchPad:
     def updateSSRButtons(self, app):
         """ Update buttons based on the state of the current selection in appList
         """
+        self._ssrStatusRequestID += 1
+        requestID = self._ssrStatusRequestID
+        self.disableSSRButtons()
+
+        thread = threading.Thread(target=self._updateSSRButtonsThread,
+                                  args=(app, requestID))
+        thread.daemon = True
+        thread.start()
+
+    def _updateSSRButtonsThread(self, app, requestID):
         # use status to find out if the service is currently running
         running = None
+        installed = None
         if sys.platform == 'win32':
             pass
         else:
@@ -1154,18 +1172,40 @@ class LaunchPad:
             if app is not None:
                 running = self.checkStatus(app)
 
-        if running:
+        # if autostart find out if installed
+        if self.appList[app].get('Autostart', 0):
+            installed = self.checkAutoStart(app)
+
+        try:
+            self.master.after(0, lambda: self._applySSRButtons(app,
+                                                               requestID,
+                                                               running,
+                                                               installed))
+        except tk.TclError:
+            pass
+
+    def _applySSRButtons(self, app, requestID, running, installed):
+        if requestID != self._ssrStatusRequestID:
+            return
+
+        try:
+            selected = int(self.appSelect.curselection()[0])
+        except (IndexError, tk.TclError):
+            return
+
+        if app != selected:
+            return
+
+        if running == True:
             self.SSRFrame.children['start'].config(state=tk.DISABLED)
             self.SSRFrame.children['stop'].config(state=tk.ACTIVE)
             self.SSRFrame.children['restart'].config(state=tk.ACTIVE)
-        elif not running:
+        elif running == False:
             self.SSRFrame.children['start'].config(state=tk.ACTIVE)
             self.SSRFrame.children['stop'].config(state=tk.DISABLED)
             self.SSRFrame.children['restart'].config(state=tk.DISABLED)
 
-        # if autostart find out if installed
         if self.appList[app].get('Autostart', 0):
-            installed = self.checkAutoStart(app)
             if installed == True:
                 self.serviceButton.config(state=tk.ACTIVE,
                                           text=self._autoStartText['disable'],
@@ -1188,9 +1228,17 @@ class LaunchPad:
         appCommand.append("status")
 
         self.logger.debug("Querying {}".format(appCommand))
-        output = subprocess.check_output(appCommand,
-                                         cwd=self.appList[app]['CWD'],
-                                         stderr=subprocess.STDOUT)
+        try:
+            output = subprocess.check_output(appCommand,
+                                             cwd=self.appList[app]['CWD'],
+                                             stderr=subprocess.STDOUT,
+                                             timeout=2)
+        except subprocess.TimeoutExpired:
+            self.logger.warn("Status check timed out for {}".format(self.appList[app]['Name']))
+            return None
+        except subprocess.CalledProcessError as exc:
+            output = exc.output
+
         if isinstance(output, bytes):
             output_text = output.decode(errors="replace")
         else:
